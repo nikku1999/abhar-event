@@ -1,0 +1,24 @@
+SELECT districtname,COUNT(DISTINCT userid) as total_user_count
+FROM (select a.*,b.divisionname,b.statename,b.districtname,c.paid_batch,d.free_batch from 
+(select * from 
+(select userid,event_date,pincode,rank() over(partition by userid order by event_date desc) rank_
+from bq.Physics_Wallah_65ada_Analytics_User_Location
+order by 1)
+where rank_=1)a
+join
+(select distinct pincode,divisionname,statename,districtname from bq.dim_geography)b
+on a.pincode=b.pincode
+left join
+(
+  select userid,batch_name as paid_batch from batch_enrol_paid
+)c
+on a.userid=c.userid
+left join
+(select userid,name as free_batch from batch_enrol_free)d
+on
+a.userid=d.userid
+where statename ilike 'Guj%' 
+
+order by a.event_date desc)d
+GROUP BY districtname
+ORDER BY 
